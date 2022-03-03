@@ -1,0 +1,17 @@
+TODO:
+
+Backend
+Map api routes
+Add validators
+Connect to postgres
+Connect to stripe 
+Add logging
+Add unit testing
+
+Frontend 
+Create compoenents
+Create pages
+Sanitise input forms
+Handle fetch errors
+e2e testing
+
