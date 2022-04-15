@@ -1,4 +1,3 @@
-from threading import activeCount
 from rest_framework import serializers
 from .models import Listing
 
@@ -14,6 +13,7 @@ class ListingSerializer(serializers.ModelSerializer):
         'region', 
         'is_verified', 
         'premium', 
-        'profile_url'
+        'profile_url',
+        'profile_image'
     ]
             

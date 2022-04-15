@@ -1,9 +1,11 @@
 from django.db import models
+from django.forms import ModelForm
 
 class Filters(models.Model):
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
 
+# we want to use a model which is based off of the listing model
 class Listing(models.Model):
     company_name = models.CharField(max_length=255)
     job_title = models.CharField(max_length=255)
@@ -14,6 +16,7 @@ class Listing(models.Model):
     is_verified = models.BooleanField(default=False)
     premium = models.BooleanField(default=False)
     profile_url = models.URLField(null=True)
+    profile_image = models.ImageField(upload_to='profile_images', null=True)
 
     def create(self, validated_data):
         """
@@ -21,4 +24,7 @@ class Listing(models.Model):
         """
         return Listing.objects.create(**validated_data)
     
-
+class ListingForm(ModelForm):
+    class Meta:
+        model = Listing
+        fields = '__all__'
