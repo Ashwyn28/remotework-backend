@@ -16,7 +16,7 @@ class ListingFactory(DjangoModelFactory):
     region = factory.Faker('city')
     is_verified = factory.Faker('boolean')
     premium = factory.Faker('boolean')
+    application_url = factory.Faker('sentence', nb_words=10)    
 
 
 # listing = json.dumps(ListingFactory())
-

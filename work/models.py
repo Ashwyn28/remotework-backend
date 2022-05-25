@@ -25,7 +25,7 @@ class Listing(models.Model):
     is_verified = models.BooleanField(default=False)
     premium = models.BooleanField(default=False)
     profile_url = models.URLField(null=True, max_length=500)
-    profile_image = models.ImageField(upload_to='profile_images', null=True)
+    application_url = models.URLField(null=True, max_length=500)
 
     def create(self, validated_data):
         """

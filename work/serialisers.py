@@ -14,6 +14,6 @@ class ListingSerializer(serializers.ModelSerializer):
         'is_verified', 
         'premium', 
         'profile_url',
-        'profile_image'
+        'application_url'
     ]
             

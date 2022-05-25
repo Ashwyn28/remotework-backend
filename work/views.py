@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from rest_framework import viewsets, status
@@ -21,7 +20,6 @@ class PremiumListingPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 5
 
-
 class ListingsPremium(viewsets.ReadOnlyModelViewSet):
     # add pagination
     queryset = Listing.objects.filter(premium=True)
@@ -39,6 +37,23 @@ class Listings(ListAPIView):
         if category is not None:
             queryset = queryset.filter(category=category)
         return queryset
+
+class Filters(ListAPIView):
+    # TODO: query all unique categories
+    # -> frontend should make the api call and populate
+    #   the filters component
+
+    # add pagination
+    serializer_class = ListingSerializer
+
+    def get_queryset(self):
+        queryset = Listing.objects.get(category)
+        return queryset
+
+class Companies(ListAPIView):
+    # TODO: annotate/group all listings by company_name
+
+    pass
 
 @api_view(["POST"])
 def create_checkout_session(request):
@@ -64,6 +79,7 @@ def create_checkout_session(request):
 
 
 def calculate_order_amount(items):
+    breakpoint()
     return 1400
 
 @api_view(["POST"])
