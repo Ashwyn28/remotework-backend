@@ -14,6 +14,8 @@ class Filters(models.Model):
 # -> should obtain a success event from stripe then create the listing
 # follow docs https://stripe.com/docs/payments/checkout/fulfill-orders
 
+# use celery to manage creation and payment for listing
+
 # we want to use a model which is based off of the listing model
 class Listing(models.Model):
     company_name = models.CharField(max_length=255)
@@ -26,6 +28,9 @@ class Listing(models.Model):
     premium = models.BooleanField(default=False)
     profile_url = models.URLField(null=True, max_length=500)
     application_url = models.URLField(null=True, max_length=500)
+    created = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
+    failed = models.BooleanField(default=False)
 
     def create(self, validated_data):
         """
