@@ -33,9 +33,13 @@ class Listings(ListAPIView):
 
     def get_queryset(self):
         category = self.request.query_params.get("category")
+        pk = self.request.query_params.get("pk")
         queryset = Listing.objects.all()
         if category is not None:
             queryset = queryset.filter(category=category)
+        if pk is not None:
+            queryset = queryset.filter(pk=pk)
+        
         return queryset
 
 class Filters(ListAPIView):

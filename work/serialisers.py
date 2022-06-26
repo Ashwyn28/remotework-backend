@@ -5,6 +5,7 @@ class ListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = [
+        'id',
         'company_name', 
         'job_title',
         'description', 
