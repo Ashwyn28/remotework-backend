@@ -1,16 +1,17 @@
 from django.db import models
 from django.forms import ModelForm
 
+
 class Filters(models.Model):
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
 
 
 # todo: handle payment states
-# -> should have the following states 
+# -> should have the following states
 #  [pending, complete]
 # -> data should be stored in frontend store
-# -> payment should then be processed 
+# -> payment should then be processed
 # -> should obtain a success event from stripe then create the listing
 # follow docs https://stripe.com/docs/payments/checkout/fulfill-orders
 
@@ -29,6 +30,7 @@ class Listing(models.Model):
     profile_url = models.URLField(null=True, max_length=500)
     application_url = models.URLField(null=True, max_length=500)
     created = models.BooleanField(default=False)
+    in_progress = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     failed = models.BooleanField(default=False)
 
@@ -37,8 +39,9 @@ class Listing(models.Model):
         Create and validate a new Listing
         """
         return Listing.objects.create(**validated_data)
-    
+
+
 class ListingForm(ModelForm):
     class Meta:
         model = Listing
-        fields = '__all__'
+        fields = "__all__"

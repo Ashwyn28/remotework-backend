@@ -17,4 +17,12 @@ class ListingSerializer(serializers.ModelSerializer):
         'profile_url',
         'application_url'
     ]
+
+class FullListingSerialiser(ListingSerializer):
+    class Meta:
+        model = Listing
+        fields = [
+            'paid',
+            'failed'
+        ]
             
