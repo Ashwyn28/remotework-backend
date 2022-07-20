@@ -36,12 +36,20 @@ class Listings(ListAPIView):
     def get_queryset(self):
         category = self.request.query_params.get("category")
         pk = self.request.query_params.get("pk")
-        queryset = Listing.objects.filter(paid=True)
+        state = self.request.query_params.get("state")
+
+        queryset = Listing.objects.all()
+        
         if category is not None:
             queryset = queryset.filter(category=category)
         if pk is not None:
             queryset = queryset.filter(pk=pk)
-
+        if state == 'paid':
+            queryset = queryset.filter(paid=True)
+        if state == 'in_progress':
+            queryset = queryset.filter(in_progress=True)
+        if state == 'failed':
+            queryset = queryset.filter(failed=True)
         return queryset
 
 
@@ -65,7 +73,6 @@ class Companies(ListAPIView):
         queryset = Listing.objects.get(company_name)
         # -> grab all listings with
         return queryset
-
 
 def calculate_order_amount(items):
     for item in items:
