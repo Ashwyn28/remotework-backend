@@ -1,25 +1,53 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Company
+
+from work.models import Company, Listing
 
 
-class CompanySerializer(serializers.ModelSerializer):
+class CompanyNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ["name", "category", "is_verified", "profile_url"]
+        fields = ["name"]
 
 
-class ListingSerializer(serializers.Serializer):
-    company = CompanySerializer(required=True)
-    job_title = serializers.CharField(required=True)
-    description = serializers.CharField(required=True)
-    category = serializers.CharField(required=True)
-    salary = serializers.IntegerField(required=True)
-    region = serializers.CharField(required=True)
-    premium = serializers.BooleanField(required=True)
-    application_url = serializers.URLField(required=True)
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["first_name", "email"]
+
+
+class ListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Listing
+        fields = [
+            "id",
+            "company",
+            "job_title",
+            "description",
+            "category",
+            "salary",
+            "region",
+            "premium",
+            "application_url",
+        ]
 
 
 class FullListingSerializer(ListingSerializer):
     paid = serializers.BooleanField()
     in_progess = serializers.BooleanField()
     failed = serializers.BooleanField()
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    listings = ListingSerializer(many=True)
+
+    class Meta:
+        model = Company
+        fields = [
+            "name",
+            "description",
+            "category",
+            "is_verified",
+            "profile_url",
+            "listings",
+        ]

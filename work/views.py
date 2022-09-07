@@ -1,15 +1,25 @@
-from django.http import JsonResponse
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.generics import ListAPIView
-from rest_framework.views import APIView
-from rest_framework.pagination import PageNumberPagination
-from work.serialisers import ListingSerializer
-from work.models import Listing
-from dotenv import load_dotenv
+import json
+import logging
 import os
+
 import stripe
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from dotenv import load_dotenv
+from google.auth.transport import requests
+from google.oauth2 import id_token
+from rest_framework import status, viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from work import serialisers
+from work.models import Company, Listing
+from work.serialisers import (CompanySerializer, ListingSerializer,
+                              UserSerializer)
 
 load_dotenv()
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
@@ -27,11 +37,13 @@ class ListingsPremium(viewsets.ReadOnlyModelViewSet):
     queryset = Listing.objects.filter(premium=True)
     pagination_class = PremiumListingPagination
     serializer_class = ListingSerializer
+    permission_classes = [AllowAny]
 
 
 class Listings(ListAPIView):
     # add pagination
     serializer_class = ListingSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         category = self.request.query_params.get("category")
@@ -39,16 +51,15 @@ class Listings(ListAPIView):
         state = self.request.query_params.get("state")
 
         queryset = Listing.objects.all()
-        
         if category is not None:
             queryset = queryset.filter(category=category)
         if pk is not None:
             queryset = queryset.filter(pk=pk)
-        if state == 'paid':
+        if state == "paid":
             queryset = queryset.filter(paid=True)
-        if state == 'in_progress':
+        if state == "in_progress":
             queryset = queryset.filter(in_progress=True)
-        if state == 'failed':
+        if state == "failed":
             queryset = queryset.filter(failed=True)
         return queryset
 
@@ -67,11 +78,11 @@ class Filters(ListAPIView):
 
 
 class Companies(ListAPIView):
-    serializer_class = ListingSerializer
+    serializer_class = CompanySerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        queryset = Listing.objects.get(company_name)
-        # -> grab all listings with
+        queryset = Company.objects.prefetch_related("listings")
         return queryset
 
 def calculate_order_amount(items):
@@ -82,41 +93,32 @@ def calculate_order_amount(items):
             return 2000
 
 
-@api_view(["POST"])
-def create_payment_intent(request):
-    """
-    Create custom payment form
-    """
-    try:
-        data = request.data
-        # Create a PaymentIntent with the order amount and currency
-        intent = stripe.PaymentIntent.create(
-            amount=calculate_order_amount(data["items"]),
-            currency="eur",
-            automatic_payment_methods={
-                "enabled": True,
-            },
-        )
-        return JsonResponse({"clientSecret": intent["client_secret"]})
-    except Exception as e:
-        return JsonResponse(error=str(e)), 403
-
-
-@api_view(["POST"])
-def create_listing(request):
-    """
-    Create a new listing
-    """
-    serializer = ListingSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class ListingView(viewsets.ModelViewSet):
+    queryset = Listing.objects.all()
+    serializer_class = ListingSerializer
+    permission_classes = [AllowAny]
 
 
 class PayListing(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        payment = create_payment_intent(self.request)
+        """
+        Create custom payment form
+        """
+        try:
+            data = request.data
+            # Create a PaymentIntent with the order amount and currency
+            intent = stripe.PaymentIntent.create(
+                amount=calculate_order_amount(data["items"]),
+                currency="eur",
+                automatic_payment_methods={
+                    "enabled": True,
+                },
+            )
+            payment = JsonResponse({"clientSecret": intent["client_secret"]})
+        except Exception as e:
+            payment = JsonResponse(error=str(e)), 403
         # set listing to paid for
         listing_id = request.query_params.get("pk")
         if listing_id:
@@ -130,8 +132,68 @@ class PayListing(APIView):
 
 
 class SetListingSuccessful(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         listing_id = request.query_params.get("pk")
         if listing_id:
             listing = Listing.objects.filter(id=listing_id).update(paid=True)
         return Response(listing)
+
+
+class Auth(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = json.loads(request.body)
+        token = data
+        # verify token
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                "601837645469-i46geu02ca7rthamniuehgkp5ithjbl9.apps.googleusercontent.com",
+            )
+
+            if idinfo:
+                auth_data = {
+                    "first_name": idinfo["name"],
+                    "email": idinfo["email"],
+                }
+
+        except ValueError:
+            logging.error("Invalid token")
+
+        serializer = serialisers.UserSerializer(data=auth_data)
+
+        user = User.objects.filter(email=auth_data["email"])
+        if user.exists():
+            token = Token.objects.get_or_create(user=user.first())
+            data = {
+                "id": user.first().id,
+                "our_token": token[0].key,
+                "first_name": auth_data["first_name"],
+                "email": auth_data["email"],
+            }
+            # need to update to use correct status code
+            return Response(data, status=status.HTTP_200_OK)
+
+        if not user.exists():
+            # redirect to enter company details
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class _User(ListAPIView):
+
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get("pk")
+        if user_id:
+            user = User.objects.filter(id=user_id)
+        return user
