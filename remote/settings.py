@@ -42,9 +42,12 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "work",
+    "accounts",
 ]
 
 MIDDLEWARE = [
+    # the board returns every listing in one response; compress it
+    "django.middleware.gzip.GZipMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -58,6 +61,9 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "http://127.0.0.1:8000",
 ]
 
@@ -127,7 +133,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -145,3 +151,25 @@ REST_FRAMEWORK = {
 
 CELERY_BROKER = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+
+# --- Sign-in ---------------------------------------------------------------------------
+# Google OAuth client used by "Sign in with Google". Client IDs are public; override per
+# environment. The browser origin must be listed under "Authorised JavaScript origins".
+GOOGLE_CLIENT_ID = os.environ.get(
+    "GOOGLE_CLIENT_ID", "601837645469-i46geu02ca7rthamniuehgkp5ithjbl9.apps.googleusercontent.com"
+)
+
+# The frontend reaches the API through its own origin (/api is proxied), so the session
+# cookie is first-party. Keep it out of page scripts and off cross-site requests.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+# set to "true" wherever the site is served over https
+SESSION_COOKIE_SECURE = os.environ.get("SECURE_COOKIES", "false").lower() == "true"
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:3001,http://localhost:3000").split(",")
+    if origin.strip()
+]
+

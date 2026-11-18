@@ -4,6 +4,7 @@ import os
 
 import stripe
 from django.contrib.auth.models import User
+from django.db.models import F
 from django.http import JsonResponse
 from dotenv import load_dotenv
 from google.auth.transport import requests
@@ -18,8 +19,8 @@ from rest_framework.views import APIView
 
 from work import serialisers
 from work.models import Company, Listing
-from work.serialisers import (CompanySerializer, ListingSerializer,
-                              UserSerializer)
+from work.serialisers import (BoardListingSerializer, CompanySerializer,
+                              ListingSerializer, UserSerializer)
 
 load_dotenv()
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
@@ -62,6 +63,37 @@ class Listings(ListAPIView):
         if state == "failed":
             queryset = queryset.filter(failed=True)
         return queryset
+
+
+class Board(ListAPIView):
+    """
+    Every listing shown on the job board: listings from top companies only,
+    best-ranked company first and premium listings first within a company.
+
+    Optional ?industry=<slug> and ?category=<slug> (type of work) filters.
+    """
+
+    serializer_class = BoardListingSerializer
+    permission_classes = [AllowAny]
+    # the board is a short curated list, so it is returned in one response
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = (
+            Listing.objects.filter(company__is_top=True).select_related("company")
+        )
+        industry = self.request.query_params.get("industry")
+        category = self.request.query_params.get("category")
+        if industry:
+            queryset = queryset.filter(company__industry=industry)
+        if category:
+            queryset = queryset.filter(category=category)
+        return queryset.order_by(
+            F("company__rank").asc(nulls_last=True),
+            "company__name",
+            "-premium",
+            "id",
+        )
 
 
 class Filters(ListAPIView):
