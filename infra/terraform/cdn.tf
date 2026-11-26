@@ -111,18 +111,20 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 }
 
 locals {
-  site_origin = "site"
-  data_origin = "data"
-  api_origin  = "api"
+  site_origin  = "site"
+  data_origin  = "data"
+  api_origin   = "api"
+  agent_origin = "agent"
   # https://<id>.lambda-url.<region>.on.aws/ -> <id>.lambda-url.<region>.on.aws
-  api_domain = replace(replace(aws_lambda_function_url.api.function_url, "https://", ""), "/", "")
+  api_domain   = replace(replace(aws_lambda_function_url.api.function_url, "https://", ""), "/", "")
+  agent_domain = replace(replace(aws_lambda_function_url.agent.function_url, "https://", ""), "/", "")
 }
 
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
   http_version        = "http2and3"
-  comment             = "${var.project}: site, board data and accounts API"
+  comment             = "${var.project}: site, board data, accounts API and chat agent"
   aliases             = [var.domain_name]
   default_root_object = "index.html"
   # Europe and North America edge locations only: the cheapest price class
@@ -148,6 +150,22 @@ resource "aws_cloudfront_distribution" "site" {
       https_port             = 443
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+    }
+    custom_header {
+      name  = "X-Origin-Verify"
+      value = random_password.origin_secret.result
+    }
+  }
+
+  origin {
+    origin_id   = local.agent_origin
+    domain_name = local.agent_domain
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+      origin_read_timeout    = 30
     }
     custom_header {
       name  = "X-Origin-Verify"
@@ -191,6 +209,19 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = data.aws_cloudfront_cache_policy.optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+  }
+
+  # chat agent: must come before /api/* so it wins; never cached
+  ordered_cache_behavior {
+    path_pattern               = "/api/agent*"
+    target_origin_id           = local.agent_origin
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_except_host.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 

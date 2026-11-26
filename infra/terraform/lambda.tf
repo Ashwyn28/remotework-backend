@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
-  for_each          = toset(["sync", "api"])
+  for_each          = toset(["sync", "api", "agent"])
   name              = "/aws/lambda/${var.project}-${each.key}"
   retention_in_days = var.log_retention_days
 }

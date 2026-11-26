@@ -12,6 +12,7 @@ the Google Cloud console. Never run this on a public network: it is for developm
 from __future__ import annotations
 
 import argparse
+import json
 import mimetypes
 import os
 import secrets
@@ -24,7 +25,7 @@ from .store import MemoryStore
 DEFAULT_CLIENT_ID = "601837645469-i46geu02ca7rthamniuehgkp5ithjbl9.apps.googleusercontent.com"
 
 
-def make_handler(app: App, data_root: Path):
+def make_handler(app: App, data_root: Path, agent=None):
     data_root = data_root.resolve()
 
     class Handler(BaseHTTPRequestHandler):
@@ -68,8 +69,23 @@ def make_handler(app: App, data_root: Path):
             else:
                 self.send_error(404)
 
+        def _agent(self) -> None:
+            length = int(self.headers.get("Content-Length") or 0)
+            headers = {name.lower(): value for name, value in self.headers.items()}
+            reply = agent.handle("POST", headers, self.rfile.read(length) if length else b"", self.client_address[0])
+            body = json.dumps(reply.body).encode()
+            self.send_response(reply.status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
         def do_POST(self):  # noqa: N802
-            self._api("POST")
+            if self.path.split("?", 1)[0].rstrip("/") == "/api/agent":
+                self._agent()
+            else:
+                self._api("POST")
 
         def do_PUT(self):  # noqa: N802
             self._api("PUT")
@@ -105,7 +121,13 @@ def main() -> None:
         secure_cookies=False,  # plain http on localhost
     )
     app = App(config, MemoryStore(), verify)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(app, Path(args.data)))
+    # the chat agent calls Claude with this machine's credentials (ANTHROPIC_API_KEY or an
+    # `ant auth login` profile); counters live in memory and reset when the server stops
+    from jobagent.chat import Agent, MemoryQuota
+    from jobagent.chat import Config as AgentConfig
+
+    agent = Agent(AgentConfig(site_origin=args.site_origin), MemoryQuota())
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(app, Path(args.data), agent))
     print(f"orbbits job dev backend on http://127.0.0.1:{args.port} (data from {args.data})")
     server.serve_forever()
 

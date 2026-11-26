@@ -21,3 +21,12 @@ output "sync_function" {
 output "api_function" {
   value = aws_lambda_function.api.function_name
 }
+
+output "agent_function" {
+  value = aws_lambda_function.agent.function_name
+}
+
+output "agent_role_arn" {
+  description = "The subject Anthropic's federation rule must match."
+  value       = aws_iam_role.agent.arn
+}
