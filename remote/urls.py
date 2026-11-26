@@ -23,7 +23,9 @@ router = routers.DefaultRouter()
 router.register(r'premium', views.ListingsPremium)
 
 urlpatterns = [
-    path('', include('work.urls')),
+    path('', include('work.urls')),  # legacy unprefixed paths, used by the old employer pages
+    path('api/', include('accounts.urls')),
+    path('api/', include('work.urls')),  # the board and everything else, under one prefix
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),

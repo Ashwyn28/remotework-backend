@@ -1,4 +1,3 @@
-import json
 import factory
 from factory.django import DjangoModelFactory
 

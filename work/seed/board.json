@@ -1,0 +1,567 @@
+[
+  {
+    "name": "Ledgerline",
+    "industry": "fintech",
+    "location": "London, UK",
+    "size": "220 people",
+    "description": "Payments infrastructure for marketplaces.",
+    "listings": [
+      {
+        "job_title": "Senior Backend Engineer",
+        "category": "engineering",
+        "salary": "£85k – £105k",
+        "arrangement": "Hybrid",
+        "description": "Own the settlement pipeline that moves funds between buyers, sellers and banks."
+      },
+      {
+        "job_title": "Product Designer, Onboarding",
+        "category": "design",
+        "salary": "£65k – £80k",
+        "arrangement": "Hybrid",
+        "description": "Redesign how new merchants verify their business and take a first payment."
+      }
+    ],
+    "stage": "series-c-plus",
+    "founded": 2017,
+    "funding": "£140m raised",
+    "mission": "Make getting paid as simple as sending a message.",
+    "investors": [
+      "Northbridge Capital",
+      "Halcyon Ventures"
+    ],
+    "perks": [
+      "Equity for everyone",
+      "25 days holiday + bank holidays",
+      "£1,500 learning budget",
+      "Private health insurance"
+    ]
+  },
+  {
+    "name": "Pennywise Labs",
+    "industry": "fintech",
+    "location": "Berlin, DE",
+    "size": "80 people",
+    "description": "A savings app that rounds up and invests the change.",
+    "listings": [
+      {
+        "job_title": "Data Scientist, Risk",
+        "category": "data",
+        "salary": "€75k – €95k",
+        "arrangement": "Remote (EU)",
+        "description": "Build the models that spot fraud before money leaves an account."
+      },
+      {
+        "job_title": "Growth Marketing Lead",
+        "category": "marketing",
+        "salary": "€70k – €85k",
+        "arrangement": "Hybrid",
+        "description": "Run acquisition across paid, referral and partnerships."
+      }
+    ],
+    "stage": "series-b",
+    "founded": 2019,
+    "funding": "€48m raised",
+    "mission": "Help a million people save without thinking about it.",
+    "investors": [
+      "Fernhill Partners",
+      "Oakmoor Capital"
+    ],
+    "perks": [
+      "Equity",
+      "Remote-first across the EU",
+      "4-day weeks in August",
+      "Home office budget"
+    ]
+  },
+  {
+    "name": "Northgate Treasury",
+    "industry": "fintech",
+    "location": "Edinburgh, UK",
+    "size": "140 people",
+    "description": "Cash-flow forecasting for mid-sized businesses.",
+    "listings": [
+      {
+        "job_title": "Product Manager, Forecasting",
+        "category": "product",
+        "salary": "£70k – £90k",
+        "arrangement": "Hybrid",
+        "description": "Set direction for the forecasting engine used by finance teams every Monday."
+      },
+      {
+        "job_title": "Customer Operations Manager",
+        "category": "operations",
+        "salary": "£45k – £55k",
+        "arrangement": "On-site",
+        "description": "Lead the team that onboards and supports finance customers."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2020,
+    "funding": "£18m raised",
+    "mission": "Give every finance team a clear view of the next 13 weeks.",
+    "investors": [
+      "Glenrock Ventures"
+    ],
+    "perks": [
+      "Equity",
+      "Enhanced parental leave",
+      "Cycle-to-work scheme"
+    ]
+  },
+  {
+    "name": "Fairfold",
+    "industry": "b-corps",
+    "location": "Bristol, UK",
+    "size": "60 people",
+    "description": "A marketplace for repaired and resold clothing.",
+    "listings": [
+      {
+        "job_title": "Full-Stack Engineer",
+        "category": "engineering",
+        "salary": "£60k – £75k",
+        "arrangement": "Remote (UK)",
+        "description": "Ship features across the storefront and the seller tools."
+      },
+      {
+        "job_title": "Brand Designer",
+        "category": "design",
+        "salary": "£45k – £55k",
+        "arrangement": "Hybrid",
+        "description": "Shape the visual identity across packaging, web and campaigns."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2018,
+    "funding": "£22m raised",
+    "mission": "Keep good clothes in circulation for longer.",
+    "investors": [
+      "Kestrel Impact",
+      "Bramble Fund"
+    ],
+    "perks": [
+      "Certified B Corp",
+      "Clothing allowance",
+      "Volunteering days",
+      "Hybrid in Bristol"
+    ]
+  },
+  {
+    "name": "Common Ground Roasters",
+    "industry": "b-corps",
+    "location": "Leeds, UK",
+    "size": "110 people",
+    "description": "Worker-owned coffee roaster and subscription service.",
+    "listings": [
+      {
+        "job_title": "Head of Operations",
+        "category": "operations",
+        "salary": "£65k – £80k",
+        "arrangement": "On-site",
+        "description": "Run roasting, fulfilment and sourcing as the business doubles in size."
+      },
+      {
+        "job_title": "Lifecycle Marketing Manager",
+        "category": "marketing",
+        "salary": "£42k – £52k",
+        "arrangement": "Hybrid",
+        "description": "Own email and retention for 40,000 subscribers."
+      }
+    ],
+    "stage": "bootstrapped",
+    "founded": 2012,
+    "funding": "Worker-owned",
+    "mission": "Pay farmers fairly and roast coffee people love.",
+    "investors": [],
+    "perks": [
+      "Profit share",
+      "Free coffee for life",
+      "Paid sabbatical after 5 years"
+    ]
+  },
+  {
+    "name": "Tidewater Goods",
+    "industry": "b-corps",
+    "location": "Lisbon, PT",
+    "size": "35 people",
+    "description": "Refillable household products, delivered.",
+    "listings": [
+      {
+        "job_title": "Product Manager, Subscriptions",
+        "category": "product",
+        "salary": "€55k – €70k",
+        "arrangement": "Remote (EU)",
+        "description": "Make refills effortless — from reminders to returns."
+      }
+    ],
+    "stage": "seed",
+    "founded": 2022,
+    "funding": "€4m raised",
+    "mission": "Take single-use plastic out of the home.",
+    "investors": [
+      "Atlantic Seed Co."
+    ],
+    "perks": [
+      "Equity",
+      "Fully remote in the EU",
+      "Product allowance"
+    ]
+  },
+  {
+    "name": "Looplane",
+    "industry": "music",
+    "location": "Stockholm, SE",
+    "size": "95 people",
+    "description": "A collaborative music studio that runs in the browser.",
+    "listings": [
+      {
+        "job_title": "Audio Engineer, Web",
+        "category": "engineering",
+        "salary": "€80k – €100k",
+        "arrangement": "Hybrid",
+        "description": "Push real-time audio in the browser: WebAudio, WASM and low-latency sync."
+      },
+      {
+        "job_title": "Senior Product Designer",
+        "category": "design",
+        "salary": "€70k – €85k",
+        "arrangement": "Hybrid",
+        "description": "Design the arrangement view used by thousands of producers a day."
+      }
+    ],
+    "stage": "series-b",
+    "founded": 2018,
+    "funding": "€60m raised",
+    "mission": "Let anyone make music with anyone, anywhere.",
+    "investors": [
+      "Fjord Ventures",
+      "Northbridge Capital"
+    ],
+    "perks": [
+      "Equity",
+      "Gear budget",
+      "Studio access",
+      "Wellness stipend"
+    ]
+  },
+  {
+    "name": "Sidechain",
+    "industry": "music",
+    "location": "Los Angeles, US",
+    "size": "50 people",
+    "description": "Royalty analytics for independent artists.",
+    "listings": [
+      {
+        "job_title": "Analytics Engineer",
+        "category": "data",
+        "salary": "$130k – $155k",
+        "arrangement": "Remote (US)",
+        "description": "Turn messy royalty statements into numbers artists can trust."
+      },
+      {
+        "job_title": "Artist Community Lead",
+        "category": "marketing",
+        "salary": "$85k – $100k",
+        "arrangement": "Hybrid",
+        "description": "Build the programme that brings independent artists onto the platform."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2021,
+    "funding": "$15m raised",
+    "mission": "Make sure independent artists get every penny they're owed.",
+    "investors": [
+      "Mesa Partners"
+    ],
+    "perks": [
+      "Equity",
+      "Remote across the US",
+      "Concert allowance"
+    ]
+  },
+  {
+    "name": "Venuehop",
+    "industry": "music",
+    "location": "Manchester, UK",
+    "size": "70 people",
+    "description": "Ticketing for independent venues.",
+    "listings": [
+      {
+        "job_title": "Product Manager, Box Office",
+        "category": "product",
+        "salary": "£60k – £75k",
+        "arrangement": "Hybrid",
+        "description": "Own the tools venue staff use on the door every night."
+      },
+      {
+        "job_title": "Venue Support Specialist",
+        "category": "operations",
+        "salary": "£30k – £36k",
+        "arrangement": "On-site",
+        "description": "Be the voice on the line when a show is about to open."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2019,
+    "funding": "£12m raised",
+    "mission": "Keep independent venues full and solvent.",
+    "investors": [
+      "Pennine Capital"
+    ],
+    "perks": [
+      "Equity",
+      "Free gig tickets",
+      "Hybrid in Manchester"
+    ]
+  },
+  {
+    "name": "Canopy Carbon",
+    "industry": "environment",
+    "location": "Amsterdam, NL",
+    "size": "130 people",
+    "description": "Measures forest carbon from satellite imagery.",
+    "listings": [
+      {
+        "job_title": "Machine Learning Engineer",
+        "category": "data",
+        "salary": "€85k – €110k",
+        "arrangement": "Hybrid",
+        "description": "Train models that estimate biomass from radar and optical imagery."
+      },
+      {
+        "job_title": "Platform Engineer",
+        "category": "engineering",
+        "salary": "€80k – €95k",
+        "arrangement": "Remote (EU)",
+        "description": "Run the geospatial pipeline that processes a continent a week."
+      }
+    ],
+    "stage": "series-b",
+    "founded": 2019,
+    "funding": "€55m raised",
+    "mission": "Make forest carbon measurable, so it can be protected.",
+    "investors": [
+      "Verdant Climate Fund",
+      "Halcyon Ventures"
+    ],
+    "perks": [
+      "Equity",
+      "Climate-positive pension",
+      "2 field trips a year",
+      "30 days holiday"
+    ]
+  },
+  {
+    "name": "Gridshift",
+    "industry": "environment",
+    "location": "Edinburgh, UK",
+    "size": "85 people",
+    "description": "Software that lets batteries and heat pumps balance the grid.",
+    "listings": [
+      {
+        "job_title": "Embedded Software Engineer",
+        "category": "engineering",
+        "salary": "£65k – £85k",
+        "arrangement": "Hybrid",
+        "description": "Write the firmware that tells ten thousand devices when to charge."
+      },
+      {
+        "job_title": "Product Manager, Markets",
+        "category": "product",
+        "salary": "£70k – £85k",
+        "arrangement": "Hybrid",
+        "description": "Decide how the fleet bids into flexibility markets."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2020,
+    "funding": "£25m raised",
+    "mission": "Run the grid on clean power by making demand flexible.",
+    "investors": [
+      "Verdant Climate Fund",
+      "Glenrock Ventures"
+    ],
+    "perks": [
+      "Equity",
+      "Free heat pump install",
+      "Enhanced parental leave"
+    ]
+  },
+  {
+    "name": "Reedbed",
+    "industry": "environment",
+    "location": "Cardiff, UK",
+    "size": "40 people",
+    "description": "River water-quality sensors for utilities.",
+    "listings": [
+      {
+        "job_title": "Field Operations Lead",
+        "category": "operations",
+        "salary": "£40k – £48k",
+        "arrangement": "On-site",
+        "description": "Plan and run sensor deployments across river catchments."
+      },
+      {
+        "job_title": "UX Designer",
+        "category": "design",
+        "salary": "£45k – £58k",
+        "arrangement": "Remote (UK)",
+        "description": "Make live water-quality data readable for engineers and the public."
+      }
+    ],
+    "stage": "seed",
+    "founded": 2022,
+    "funding": "£3.5m raised",
+    "mission": "Clean rivers, measured in real time.",
+    "investors": [
+      "Severn Seed"
+    ],
+    "perks": [
+      "Equity",
+      "Outdoor field days",
+      "Flexible hours"
+    ]
+  },
+  {
+    "name": "Kindred Health",
+    "industry": "health",
+    "location": "Dublin, IE",
+    "size": "300 people",
+    "description": "Primary care by video, with in-person clinics.",
+    "listings": [
+      {
+        "job_title": "Staff Engineer, Clinical Systems",
+        "category": "engineering",
+        "salary": "€110k – €135k",
+        "arrangement": "Hybrid",
+        "description": "Lead architecture for the records system clinicians use in every consult."
+      },
+      {
+        "job_title": "Clinical Operations Manager",
+        "category": "operations",
+        "salary": "€60k – €72k",
+        "arrangement": "On-site",
+        "description": "Keep clinics staffed, scheduled and running to time."
+      }
+    ],
+    "stage": "series-c-plus",
+    "founded": 2016,
+    "funding": "€210m raised",
+    "mission": "Make a good GP available to everyone, same day.",
+    "investors": [
+      "Northbridge Capital",
+      "Liffey Partners"
+    ],
+    "perks": [
+      "Equity",
+      "Private medical for your family",
+      "£2,000 learning budget",
+      "Hybrid in Dublin"
+    ]
+  },
+  {
+    "name": "Pulsework",
+    "industry": "health",
+    "location": "Cambridge, UK",
+    "size": "75 people",
+    "description": "Data tooling for clinical trials.",
+    "listings": [
+      {
+        "job_title": "Biostatistician",
+        "category": "data",
+        "salary": "£60k – £78k",
+        "arrangement": "Hybrid",
+        "description": "Design analyses and review outputs for late-stage trials."
+      },
+      {
+        "job_title": "Content Marketing Manager",
+        "category": "marketing",
+        "salary": "£45k – £55k",
+        "arrangement": "Remote (UK)",
+        "description": "Explain complex trial tooling to the researchers who need it."
+      }
+    ],
+    "stage": "series-b",
+    "founded": 2018,
+    "funding": "£35m raised",
+    "mission": "Get new treatments to patients years sooner.",
+    "investors": [
+      "Granta Bio Fund"
+    ],
+    "perks": [
+      "Equity",
+      "Conference budget",
+      "Hybrid in Cambridge"
+    ]
+  },
+  {
+    "name": "Chalkdust",
+    "industry": "education",
+    "location": "Glasgow, UK",
+    "size": "55 people",
+    "description": "Maths tutoring that adapts to each pupil.",
+    "listings": [
+      {
+        "job_title": "Learning Designer",
+        "category": "design",
+        "salary": "£40k – £50k",
+        "arrangement": "Remote (UK)",
+        "description": "Design the lesson flows that take a pupil from stuck to fluent."
+      },
+      {
+        "job_title": "Senior Frontend Engineer",
+        "category": "engineering",
+        "salary": "£70k – £85k",
+        "arrangement": "Remote (UK)",
+        "description": "Build the interactive whiteboard pupils and tutors share."
+      }
+    ],
+    "stage": "series-a",
+    "founded": 2020,
+    "funding": "£14m raised",
+    "mission": "Make every child confident at maths.",
+    "investors": [
+      "Bramble Fund",
+      "Clyde Ventures"
+    ],
+    "perks": [
+      "Equity",
+      "Remote-first in the UK",
+      "Term-time flexible hours"
+    ]
+  },
+  {
+    "name": "Openshelf",
+    "industry": "education",
+    "location": "Toronto, CA",
+    "size": "45 people",
+    "description": "Lending software for public and school libraries.",
+    "listings": [
+      {
+        "job_title": "Product Manager, Catalogue",
+        "category": "product",
+        "salary": "C$105k – C$125k",
+        "arrangement": "Hybrid",
+        "description": "Own search and discovery across millions of titles."
+      },
+      {
+        "job_title": "Partnerships Manager",
+        "category": "marketing",
+        "salary": "C$80k – C$95k",
+        "arrangement": "Hybrid",
+        "description": "Bring library systems and publishers onto the platform."
+      }
+    ],
+    "stage": "seed",
+    "founded": 2021,
+    "funding": "C$6m raised",
+    "mission": "Keep public libraries at the centre of reading.",
+    "investors": [
+      "Maple Seed Partners"
+    ],
+    "perks": [
+      "Equity",
+      "Hybrid in Toronto",
+      "Book allowance"
+    ]
+  }
+]

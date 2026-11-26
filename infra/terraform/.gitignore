@@ -1,0 +1,8 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform.lock.hcl.bak
+
+# deployment-specific values (Claude Console ids, limits); see infra/README.md
+terraform.tfvars

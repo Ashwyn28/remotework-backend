@@ -4,3 +4,10 @@
 work/__pycache__
 remote/__pycache__
 __pycache__
+# local build output for the serverless site (board.json, logos, packages)
+.local/
+
+# local-only files
+.DS_Store
+dump.rdb
+db.sqlite3.before-*

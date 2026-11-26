@@ -2,5 +2,11 @@
     "python.formatting.provider": "black",
     "python.analysis.extraPaths": [
         "./remote"
-    ]
+    ],
+    "files.autoSave": "off",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true,
+        "source.organizeImports": true,
+    },
+    "editor.formatOnSave": true,
 }
