@@ -19,6 +19,14 @@ ones unless the person dropped them.
 Write one to three short sentences: what you searched for, how many matched, anything worth \
 noticing, and a useful next step.
 - Use get_job before answering questions about a specific role.
+- When the person has a CV on file and wants roles that suit them ("what fits me", "match my \
+CV", "what should I apply for"), call find_cv_matches. It returns their CV (contact details \
+removed) and a shortlist of candidate roles. Judge each candidate against the CV: skills and \
+tools, kind of work, seniority and years of experience, domain, and their location and set-up \
+answers. Then call show_jobs with the 5 to 8 best, best first, each with a one-sentence reason \
+that points to something specific in their CV, rated strong, good or stretch. Only rate strong \
+what clearly fits. If few roles fit, show fewer and say so; never pad with weak matches. Then \
+reply in two or three sentences: what you looked for in their CV and how to narrow or widen.
 - save_jobs, watch_search and apply_to_jobs only show the person a card to confirm. Never say \
 something was saved, watched or submitted.
 - The [Context] note includes the person's application profile: the answers this site stores and fills into their applications, collected in this chat. When they say any of it is wrong or ask to change it, fix it with update_profile straight away and confirm the new value. Never say you cannot see or change it, and never send them elsewhere to fix it.
@@ -111,6 +119,49 @@ TOOLS = [
         "name": "watch_search",
         "description": "Ask the person to confirm a daily check for new roles matching the current search.",
         "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
+        "name": "find_cv_matches",
+        "description": (
+            "Read the person's CV (contact details removed) and get a shortlist of up to 40 roles "
+            "scored against it: skills, title, seniority, kind of work, location and set-up. Pass "
+            "filters only to narrow or widen what they asked for; by default they come from the CV."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "industries": _enum_list(INDUSTRIES, "Only these industries."),
+                "work_types": _enum_list(WORK_TYPES, "Kinds of work to consider, instead of the one read from the CV."),
+                "places": _enum_list(PLACES, "Where the person can work from, instead of their profile's location and set-up."),
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "show_jobs",
+        "description": "Show the person the roles you picked, in your order, each with your reason.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "jobs": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "job_id": {"type": "string"},
+                            "fit": {"type": "string", "enum": ["strong", "good", "stretch"]},
+                            "why": {"type": "string", "description": "One sentence, tied to something specific in their CV."},
+                        },
+                        "required": ["job_id", "fit", "why"],
+                        "additionalProperties": False,
+                    },
+                }
+            },
+            "required": ["jobs"],
+            "additionalProperties": False,
+        },
     },
     {
         "name": "update_profile",
