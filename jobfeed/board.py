@@ -35,6 +35,7 @@ LINK_ONLY = "link"
 class Result:
     roles: int = 0
     skipped: int = 0  # roles outside the UK
+    not_engineering: int = 0  # UK roles that are not engineering
     kept: list[str] = field(default_factory=list)  # companies whose site failed; previous roles kept
     new_logos: list[str] = field(default_factory=list)
     missing_logos: list[str] = field(default_factory=list)
@@ -174,10 +175,15 @@ def build(store: Store, companies: list[dict] | None = None, now: datetime | Non
                 if not classify.is_uk(role):
                     result.skipped += 1
                     continue
+                if not classify.is_engineering(role.title):
+                    result.not_engineering += 1
+                    continue
                 listings.append(listing_entry(role, entry["id"], today))
 
     # the same role can be listed twice by one company; keep one
     unique = list({listing["id"]: listing for listing in listings}.values())
+    # newest first; roles without a posting date go last
+    unique.sort(key=lambda row: row.get("posted_at") or "", reverse=True)
     result.roles = len(unique)
     previous_ids = {row["id"] for rows in previous_by_company.values() for row in rows}
     board = {

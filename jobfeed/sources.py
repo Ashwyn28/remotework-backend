@@ -1,6 +1,6 @@
 """Read open roles from companies' public careers-site APIs.
 
-Greenhouse, Lever and Ashby each publish a company's open roles as JSON for exactly this
+Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee and Personio each publish a company's open roles as JSON for exactly this
 purpose: embedding them on other sites. Each fetcher turns one company's board into a
 list of `Role`s in a common shape. Nothing here touches a database.
 """
@@ -305,16 +305,19 @@ def fetch_workday(board: str) -> list[Role]:
                 yield item
                 yield from facets(item["values"])
 
-    country = next(
+    # sites name the filter differently: "locationCountry", "Country_and_Jurisdiction", "locations"…
+    # country filters first, as a location filter may list one UK city rather than the country
+    candidates = sorted(
         (
-            (facet["facetParameter"], value["id"])
+            (0 if "country" in facet["facetParameter"].lower() else 1, facet["facetParameter"], value["id"])
             for facet in facets(first.get("facets"))
-            if facet["facetParameter"].lower().startswith("location")
+            if "country" in facet["facetParameter"].lower() or facet["facetParameter"].lower().startswith("location")
             for value in facet["values"]
-            if (value.get("descriptor") or "").strip().lower() == "united kingdom"
+            if (value.get("descriptor") or "").strip().lower() in ("united kingdom", "uk", "great britain")
         ),
-        None,
+        key=lambda c: c[0],
     )
+    country = (candidates[0][1], candidates[0][2]) if candidates else None
     if country is None:
         return []
     facet, uk_id = country
@@ -409,6 +412,220 @@ def fetch_apple(location: str) -> list[Role]:
     return list({role.source_id: role for role in roles}.values())
 
 
+
+# --- More careers systems -------------------------------------------------------------------
+# Like Greenhouse, Lever and Ashby, each publishes a company's open roles as JSON or XML for
+# embedding on other sites. No keys needed.
+
+
+def fetch_workable(board: str) -> list[Role]:
+    """Workable's public job widget feed (apply.workable.com/<board>)."""
+    data = get_json(f"https://apply.workable.com/api/v1/widget/accounts/{board}?details=true")
+    roles = []
+    for job in data.get("jobs") or []:
+        places = [job] + list(job.get("locations") or [])
+        names = []
+        country = job.get("country") or ""
+        for place in places:
+            if place.get("hidden"):
+                continue
+            names.append(", ".join(filter(None, [place.get("city"), place.get("country")])))
+            if (place.get("countryCode") or "").upper() == "GB":
+                country = "United Kingdom"
+        location = "; ".join(dict.fromkeys(filter(None, names)))
+        remote = str(job.get("telecommuting")).lower() == "true"
+        roles.append(
+            Role(
+                source_id=f"workable:{board}:{job.get('shortcode')}",
+                title=(job.get("title") or "").strip(),
+                location=location + ("; Remote" if remote and "remote" not in location.lower() else ""),
+                department=job.get("department") or job.get("function") or "",
+                url=safe_url(job.get("url") or job.get("shortlink")),
+                apply_url=safe_url(job.get("application_url") or job.get("url")),
+                posted_at=parse_time(job.get("published_on") or job.get("created_at")),
+                workplace="remote" if remote else workplace_from_text(location),
+                country=country,
+                salary="",
+                description=plain_text(job.get("description") or ""),
+            )
+        )
+    return roles
+
+
+SMARTRECRUITERS_DETAILS = 120  # most UK roles to fetch descriptions for, one request each
+
+
+def fetch_smartrecruiters(board: str) -> list[Role]:
+    """SmartRecruiters' public Posting API. Large employers list thousands of roles worldwide,
+    so only UK postings are read, then their descriptions one by one."""
+    base = f"https://api.smartrecruiters.com/v1/companies/{board}/postings"
+    postings, offset = [], 0
+    for _ in range(MAX_PAGES):
+        page = get_json(f"{base}?limit=100&offset={offset}&country=gb")
+        content = page.get("content") or []
+        postings += content
+        offset += len(content)
+        if not content or offset >= (page.get("totalFound") or 0):
+            break
+        time.sleep(PAGE_DELAY)
+    roles = []
+    for index, job in enumerate(postings):
+        place = job.get("location") or {}
+        description, url = "", ""
+        if index < SMARTRECRUITERS_DETAILS:
+            try:
+                detail = get_json(f"{base}/{job['id']}")
+                sections = (detail.get("jobAd") or {}).get("sections") or {}
+                description = plain_text(
+                    " ".join((sections.get(k) or {}).get("text") or "" for k in ("jobDescription", "qualifications"))
+                )
+                url = safe_url(detail.get("postingUrl"))
+            except SourceError:
+                pass
+            time.sleep(0.2)
+        url = url or f"https://jobs.smartrecruiters.com/{board}/{job['id']}"
+        workplace = "remote" if place.get("remote") else "hybrid" if place.get("hybrid") else ""
+        roles.append(
+            Role(
+                source_id=f"smartrecruiters:{board}:{job['id']}",
+                title=(job.get("name") or "").strip(),
+                location=re.sub(r"(,\s*)+", ", ", place.get("fullLocation") or "").strip(", ")
+                or ", ".join(filter(None, [place.get("city"), "United Kingdom"])),
+                department=(job.get("department") or {}).get("label") or (job.get("function") or {}).get("label") or "",
+                url=url,
+                apply_url=url,
+                posted_at=parse_time(job.get("releasedDate")),
+                workplace=workplace,
+                country="United Kingdom" if (place.get("country") or "").lower() == "gb" else place.get("country") or "",
+                salary="",
+                description=description,
+            )
+        )
+    return roles
+
+
+def fetch_recruitee(board: str) -> list[Role]:
+    """Recruitee's public offers feed (<board>.recruitee.com)."""
+    data = get_json(f"https://{board}.recruitee.com/api/offers/")
+    roles = []
+    for job in data.get("offers") or []:
+        places = job.get("locations") or [job]
+        location = "; ".join(
+            dict.fromkeys(filter(None, (", ".join(filter(None, [p.get("city"), p.get("country")])) for p in places)))
+        )
+        uk = any((p.get("country_code") or "").upper() == "GB" for p in places)
+        pay = job.get("salary") or {}
+        workplace = "remote" if job.get("remote") else "hybrid" if job.get("hybrid") else "onsite" if job.get("on_site") else ""
+        roles.append(
+            Role(
+                source_id=f"recruitee:{board}:{job.get('id')}",
+                title=(job.get("title") or "").strip(),
+                location=location,
+                department=job.get("department") or "",
+                url=safe_url(job.get("careers_url")),
+                apply_url=safe_url(job.get("careers_apply_url") or job.get("careers_url")),
+                posted_at=parse_time((job.get("published_at") or job.get("created_at") or "").replace(" UTC", "+00:00")),
+                workplace=workplace,
+                country="United Kingdom" if uk else job.get("country") or "",
+                salary=salary_text(pay.get("min"), pay.get("max"), pay.get("currency"), "year" if pay.get("period") == "year" else pay.get("period") or ""),
+                description=plain_text((job.get("description") or "") + " " + (job.get("requirements") or "")),
+            )
+        )
+    return roles
+
+
+def fetch_personio(board: str) -> list[Role]:
+    """Personio's public XML job feed (<board>.jobs.personio.de, or .com)."""
+    import xml.etree.ElementTree as ElementTree
+
+    domain = "com" if board.endswith(".com") else "de"
+    name = board.removesuffix(".com")
+    raw = _request(f"https://{name}.jobs.personio.{domain}/xml?language=en", accept="application/xml")
+    try:
+        root = ElementTree.fromstring(raw)
+    except ElementTree.ParseError as error:
+        raise SourceError(f"Personio {board}: not XML") from error
+    roles = []
+    for job in root.findall("position"):
+        text = lambda tag: (job.findtext(tag) or "").strip()  # noqa: E731
+        offices = [text("office")] + [(o.text or "").strip() for o in job.findall("additionalOffices/office")]
+        location = "; ".join(dict.fromkeys(filter(None, offices)))
+        description = " ".join(
+            (d.findtext("value") or "") for d in job.findall("jobDescriptions/jobDescription")
+        )
+        job_id = text("id")
+        url = f"https://{name}.jobs.personio.{domain}/job/{job_id}?language=en"
+        roles.append(
+            Role(
+                source_id=f"personio:{name}:{job_id}",
+                title=text("name"),
+                location=location,
+                department=text("department"),
+                url=url,
+                apply_url=url,
+                posted_at=parse_time(text("createdAt")),
+                workplace=workplace_from_text(location),
+                country="",
+                salary="",
+                description=plain_text(description),
+            )
+        )
+    return roles
+
+
+ORACLE_PAGE = 25
+
+
+def fetch_oracle(board: str) -> list[Role]:
+    """Oracle Recruiting Cloud careers sites (e.g. JPMorgan Chase). board = "<host>:<site>",
+    e.g. "jpmc.fa.oraclecloud.com:CX_1001". UK roles only."""
+    host, site = board.split(":")
+    api = f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
+
+    def search(extra: str):
+        finder = f"findReqs;siteNumber={site},{extra}"
+        data = get_json(f"{api}?onlyData=true&expand=requisitionList.secondaryLocations&finder={finder}")
+        return (data.get("items") or [{}])[0]
+
+    first = search("facetsList=LOCATIONS,limit=1")
+    uk = next(
+        (loc.get("Id") for loc in first.get("locationsFacet") or [] if (loc.get("Name") or "").strip().lower() == "united kingdom"),
+        None,
+    )
+    if uk is None:
+        return []
+    roles: list[Role] = []
+    for page in range(MAX_PAGES):
+        time.sleep(PAGE_DELAY)
+        result = search(f"locationId={uk},limit={ORACLE_PAGE},offset={page * ORACLE_PAGE},sortBy=POSTING_DATES_DESC")
+        jobs = result.get("requisitionList") or []
+        for job in jobs:
+            places = [job.get("PrimaryLocation") or ""] + [
+                p.get("Name") or "" for p in job.get("secondaryLocations") or []
+            ]
+            location = "; ".join(dict.fromkeys(filter(None, places)))
+            url = f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{job.get('Id')}"
+            roles.append(
+                Role(
+                    source_id=f"oracle:{host}:{job.get('Id')}",
+                    title=(job.get("Title") or "").strip(),
+                    location=location,
+                    department=job.get("JobFamily") or job.get("Department") or "",
+                    url=url,
+                    apply_url=url,
+                    posted_at=parse_time(job.get("PostedDate")),
+                    workplace=workplace_from_text(job.get("WorkplaceType") or "") or workplace_from_text(location),
+                    country="United Kingdom" if (job.get("PrimaryLocationCountry") or "").upper() == "GB" else "",
+                    salary="",
+                    description=plain_text(
+                        (job.get("ShortDescriptionStr") or "") + " " + (job.get("ExternalResponsibilitiesStr") or "")
+                    ),
+                )
+            )
+        if len(jobs) < ORACLE_PAGE:
+            break
+    return roles
+
 FETCHERS = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
@@ -416,6 +633,11 @@ FETCHERS = {
     "amazon": fetch_amazon,
     "workday": fetch_workday,
     "apple": fetch_apple,
+    "workable": fetch_workable,
+    "smartrecruiters": fetch_smartrecruiters,
+    "recruitee": fetch_recruitee,
+    "personio": fetch_personio,
+    "oracle": fetch_oracle,
 }
 
 

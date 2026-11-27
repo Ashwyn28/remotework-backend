@@ -18,7 +18,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     result = build(DirStore(args.out))
     print(
-        f"{result.roles} roles; {result.skipped} outside the UK skipped; "
+        f"{result.roles} roles; {result.skipped} outside the UK and {result.not_engineering} non-engineering skipped; "
         f"kept previous roles for: {', '.join(result.kept) or 'none'}; "
         f"new logos: {len(result.new_logos)}; missing logos: {', '.join(result.missing_logos) or 'none'}"
     )
