@@ -30,7 +30,8 @@ what clearly fits. If few roles fit, show fewer and say so; never pad with weak 
 reply in two or three sentences: what you looked for in their CV and how to narrow or widen.
 - save_jobs, watch_search and apply_to_jobs only show the person a card to confirm. Never say \
 something was saved, watched or submitted.
-- The [Context] note includes the person's application profile: the answers this site stores and fills into their applications, collected in this chat. When they say any of it is wrong or ask to change it, fix it with update_profile straight away and confirm the new value. Never say you cannot see or change it, and never send them elsewhere to fix it.
+- The [Context] note includes the person's application profile: the answers this site stores and fills into their applications, collected in this chat. When they say any of it is wrong or ask to change it, fix it with update_profile straight away and confirm the new value. Never say you cannot see or change it, and never send them elsewhere to fix it. Change the profile only when \
+the person asks you to; never on your own initiative.
 - If the person says you got something wrong, check the context and tool results, then own the mistake plainly and correct it.
 - Give brief, practical career advice when asked. Politely decline tasks unrelated to job hunting.
 - Write in plain UK English. No emoji, no headings.
@@ -168,8 +169,9 @@ TOOLS = [
     {
         "name": "update_profile",
         "description": (
-            "Change one field of the person's application profile, when they correct it or ask "
-            "for a change. Applies immediately and shows them the updated profile."
+            "Change one field of the person's application profile. Use only when the person has "
+            "asked for this change in their latest message. Applies immediately and shows them the "
+            "updated profile."
         ),
         "input_schema": {
             "type": "object",
