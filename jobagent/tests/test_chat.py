@@ -61,7 +61,7 @@ class AgentTest(unittest.TestCase):
         self.agent.handle("POST", {"origin": ORIGIN}, json.dumps({"messages": HELLO, "model": "claude-fable-5-2", "tools": [], "max_tokens": 99999}).encode(), "1.2.3.4")
         call = self.client.calls[0]
         self.assertEqual(call["model"], MODEL)
-        self.assertEqual(call["max_tokens"], 2048)
+        self.assertEqual(call["max_tokens"], 4096)
 
     def test_other_origins_are_refused(self):
         self.assertEqual(self.ask(origin="https://evil.example").status, 403)
@@ -166,3 +166,25 @@ class WorkloadIdentityTest(unittest.TestCase):
         self.assertIsNone(kwargs["service_account_id"])
         self.assertEqual(kwargs["identity_token_provider"](), "jwt")
         self.assertEqual(calls[0]["Audience"], ["https://api.anthropic.com"])
+
+
+class EffortTest(unittest.TestCase):
+    def turn(self, tool):
+        return [
+            {"role": "user", "content": [{"type": "text", "text": "what fits me"}]},
+            {"role": "assistant", "content": [{"type": "tool_use", "id": "t1", "name": tool, "input": {}}]},
+            {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": "{}"}]},
+        ]
+
+    def test_cv_matching_gets_more_thought(self):
+        from jobagent.chat import effort_for
+
+        self.assertEqual(effort_for(self.turn("find_cv_matches")), "medium")
+        self.assertEqual(effort_for(self.turn("search_jobs")), "low")
+        self.assertEqual(effort_for([{"role": "user", "content": [{"type": "text", "text": "hi"}]}]), "low")
+
+    def test_agent_passes_effort(self):
+        client = FakeClient()
+        agent = Agent(Config(site_origin=ORIGIN), MemoryQuota(), client, today=lambda: "d")
+        agent.handle("POST", {"origin": ORIGIN}, body(self.turn("find_cv_matches")), "ip")
+        self.assertEqual(client.calls[0]["output_config"], {"effort": "medium"})

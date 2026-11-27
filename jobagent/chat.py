@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 MAX_BODY = 200 * 1024
 MAX_MESSAGES = 60
 MAX_USER_TEXT = 4000
-MAX_TOOL_RESULT = 12000
-MAX_OUTPUT_TOKENS = 2048  # thinking counts towards this, so leave room above the reply itself
+MAX_TOOL_RESULT = 40000  # a CV plus a shortlist of roles
+MAX_OUTPUT_TOKENS = 4096  # thinking counts towards this, so leave room above the reply itself
 ALLOWED_BLOCKS = {
     "user": {"text", "tool_result"},
     "assistant": {"text", "tool_use", "thinking", "redacted_thinking"},
@@ -138,6 +138,27 @@ def validate(body: bytes) -> list[dict]:
     return clean
 
 
+# Judging a CV against a shortlist of roles is worth more thought than chat and simple searches.
+CAREFUL_TOOLS = {"find_cv_matches"}
+
+
+def effort_for(messages: list[dict]) -> str:
+    """'medium' when this turn answers a careful tool's call, else 'low'."""
+    if len(messages) < 2 or messages[-2].get("role") != "assistant":
+        return "low"
+    answered = {
+        block.get("tool_use_id")
+        for block in messages[-1]["content"]
+        if isinstance(block, dict) and block.get("type") == "tool_result"
+    }
+    careful = any(
+        block.get("type") == "tool_use" and block.get("id") in answered and block.get("name") in CAREFUL_TOOLS
+        for block in messages[-2]["content"]
+        if isinstance(block, dict)
+    )
+    return "medium" if careful else "low"
+
+
 class Agent:
     def __init__(self, config: Config, quota: Quota, client=None, today=None):
         self.config = config
@@ -175,9 +196,9 @@ class Agent:
         if not self.quota.take("site", self.config.limits.site_per_day, day):
             return Reply(429, {"error": "daily limit reached", "scope": "site"})
 
-        return self._ask(messages)
+        return self._ask(messages, effort_for(messages))
 
-    def _ask(self, messages: list[dict]) -> Reply:
+    def _ask(self, messages: list[dict], effort: str = "low") -> Reply:
         import anthropic
 
         try:
@@ -187,7 +208,7 @@ class Agent:
                 system=SYSTEM,
                 tools=TOOLS,
                 messages=messages,
-                output_config={"effort": "low"},  # chat and simple tool calls: think little
+                output_config={"effort": effort},
                 cache_control={"type": "ephemeral"},  # reuse the system prompt, tools and history
             )
         except anthropic.BadRequestError as error:
