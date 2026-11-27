@@ -188,3 +188,63 @@ class EffortTest(unittest.TestCase):
         agent = Agent(Config(site_origin=ORIGIN), MemoryQuota(), client, today=lambda: "d")
         agent.handle("POST", {"origin": ORIGIN}, body(self.turn("find_cv_matches")), "ip")
         self.assertEqual(client.calls[0]["output_config"], {"effort": "medium"})
+
+
+class StreamTest(unittest.TestCase):
+    def fake_stream_client(self, events, final, raise_on_enter=None):
+        class Stream:
+            def __enter__(self_inner):
+                if raise_on_enter:
+                    raise raise_on_enter
+                return self_inner
+            def __exit__(self_inner, *a):
+                return False
+            def __iter__(self_inner):
+                return iter(events)
+            def get_final_message(self_inner):
+                return final
+        calls = []
+        def stream(**kwargs):
+            calls.append(kwargs)
+            return Stream()
+        return SimpleNamespace(messages=SimpleNamespace(stream=stream)), calls
+
+    def test_streams_text_tools_then_the_whole_message(self):
+        events = [
+            SimpleNamespace(type="content_block_start", content_block=SimpleNamespace(type="thinking")),
+            SimpleNamespace(type="text", text="Looking "),
+            SimpleNamespace(type="text", text="now."),
+            SimpleNamespace(type="content_block_start", content_block=SimpleNamespace(type="tool_use", name="search_jobs")),
+        ]
+        client, calls = self.fake_stream_client(events, FakeResponse())
+        agent = Agent(Config(site_origin=ORIGIN), MemoryQuota(), client, today=lambda: "d")
+        lines = [json.loads(l) for l in agent.stream(HELLO)]
+        self.assertEqual([l["type"] for l in lines], ["text", "text", "tool", "done"])
+        self.assertEqual(lines[2]["name"], "search_jobs")
+        self.assertEqual(lines[3]["content"][0]["type"], "thinking")  # passed back unchanged
+        self.assertTrue(all(t.get("eager_input_streaming") for t in calls[0]["tools"]))
+        self.assertEqual(calls[0]["model"], MODEL)
+
+    def test_api_failure_becomes_an_error_event(self):
+        import anthropic, httpx2
+        request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+        error = anthropic.RateLimitError("slow down", response=httpx2.Response(429, request=request), body=None)
+        client, _ = self.fake_stream_client([], None, raise_on_enter=error)
+        agent = Agent(Config(site_origin=ORIGIN), MemoryQuota(), client)
+        [line] = [json.loads(l) for l in agent.stream(HELLO)]
+        self.assertEqual((line["type"], line["status"]), ("error", 503))
+
+    def test_web_app_checks_then_streams(self):
+        from starlette.testclient import TestClient
+        from jobagent.server import create_app
+
+        client, _ = self.fake_stream_client([SimpleNamespace(type="text", text="Hi")], FakeResponse())
+        agent = Agent(Config(site_origin=ORIGIN, limits=Limits(1, 5)), MemoryQuota(), client, today=lambda: "d")
+        web = TestClient(create_app(lambda: agent))
+        self.assertEqual(web.get("/").text, "ok")
+        self.assertEqual(web.post("/api/agent/", content=body(HELLO), headers={"origin": "https://evil.example"}).status_code, 403)
+        ok = web.post("/api/agent/", content=body(HELLO), headers={"origin": ORIGIN, "cloudfront-viewer-address": "1.2.3.4:5"})
+        self.assertEqual(ok.headers["content-type"], "application/x-ndjson")
+        self.assertEqual([json.loads(l)["type"] for l in ok.text.splitlines()], ["text", "done"])
+        limited = web.post("/api/agent/", content=body(HELLO), headers={"origin": ORIGIN, "cloudfront-viewer-address": "1.2.3.4:5"})
+        self.assertEqual(limited.status_code, 429)
