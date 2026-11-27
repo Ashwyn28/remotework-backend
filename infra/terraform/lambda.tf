@@ -50,7 +50,8 @@ resource "aws_lambda_function" "sync" {
   filename         = var.sync_package
   source_code_hash = filebase64sha256(var.sync_package)
   memory_size      = 512
-  timeout          = 300
+  # a few hundred careers sites, read politely in parallel; Lambda's ceiling is 15 minutes
+  timeout = 900
 
   environment {
     variables = {

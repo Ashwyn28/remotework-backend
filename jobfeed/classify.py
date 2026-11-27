@@ -122,3 +122,29 @@ def seniority(title: str) -> str:
     if PEOPLE_MANAGER.search(IC_MANAGER.sub("", title)):
         return "manager"
     return "mid"
+
+
+# --- Engineering focus ------------------------------------------------------------------------
+# The board lists engineering roles only: software, data and ML engineering, infrastructure,
+# security, hardware, QA and engineering leadership.
+
+ENGINEERING_TITLE = re.compile(
+    r"\b(engineer(ing)?s?|developer|programmer|sre|devops|devsecops|architect|swe|cto|"
+    r"machine learning|ml ops|mlops|data scien\w*|research scientist|applied scientist|"
+    r"security (analyst|researcher)|penetration tester|tech lead|technical lead)\b",
+    re.I,
+)
+# engineering words in titles whose job is selling, supporting, hiring or administering
+NOT_ENGINEERING = re.compile(
+    r"\b(sales|pre-?sales|solutions?|customer|support|field|account|recruit\w*|talent|sourcer|"
+    r"marketing|finance|legal|counsel|people|hr|payroll|executive assistant|assistant to|"
+    r"coordinator|office|facilities|partnerships?|business development|community|content|"
+    r"writer|enablement|evangelist|advocate|implementation|onboarding|professional services|"
+    r"consultant|bid|commercial)\b",
+    re.I,
+)
+
+
+def is_engineering(title: str) -> bool:
+    """True for engineering roles; the board shows nothing else."""
+    return bool(ENGINEERING_TITLE.search(title)) and not NOT_ENGINEERING.search(title)

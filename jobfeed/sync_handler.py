@@ -14,6 +14,7 @@ def handler(event, context):
     summary = {
         "roles": result.roles,
         "skipped_outside_uk": result.skipped,
+        "skipped_not_engineering": result.not_engineering,
         "kept_previous": result.kept,
         "new_logos": result.new_logos,
         "missing_logos": result.missing_logos,

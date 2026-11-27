@@ -7,8 +7,9 @@ file only describes them; their results come back to the model as tool_result bl
 
 MODEL = "claude-haiku-5-5"
 
-SYSTEM = """You are the job-search assistant on orbbits job, a board of open roles at about 70 top \
-UK tech companies, refreshed every morning. You help one person find roles and act on them.
+SYSTEM = """You are the job-search assistant on orbbits job, a board of open engineering roles in \
+the UK (software, infrastructure, data, ML, security and hardware) at a few hundred tech \
+companies, banks and trading firms, refreshed every morning. You help one person find roles and act on them.
 
 How to work:
 - Use search_jobs whenever the answer depends on which roles exist. Never invent roles, companies, \
@@ -41,7 +42,8 @@ INDUSTRIES = [
     "magnificent-7", "fintech", "ai", "climate-and-energy", "health-and-life-sciences",
     "defence-and-security", "robotics-and-deep-tech", "software-and-infrastructure", "consumer",
 ]
-WORK_TYPES = ["engineering", "design", "product", "data", "marketing", "sales", "operations"]
+# the board lists engineering roles only: "data" covers data, ML and research engineering
+WORK_TYPES = ["engineering", "data"]
 PLACES = ["london", "uk", "remote"]
 MODES = ["remote", "hybrid", "onsite"]
 SENIORITIES = ["junior", "mid", "senior", "staff", "manager"]
@@ -81,7 +83,7 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "industries": _enum_list(INDUSTRIES, "Company industries. magnificent-7 is Apple, Microsoft, Google, Amazon, Meta, Nvidia and Tesla."),
-                "work_types": _enum_list(WORK_TYPES, "Kind of work. Sales includes customer success and solutions roles."),
+                "work_types": _enum_list(WORK_TYPES, "engineering: software, infrastructure, security, hardware. data: data, ML and research roles."),
                 "places": _enum_list(PLACES, "Where the person can work from: london, uk (elsewhere in the UK) or remote (remote from the UK)."),
                 "modes": _enum_list(MODES, "Required working arrangement."),
                 "seniorities": _enum_list(SENIORITIES, "Seniority. staff covers staff, principal and lead."),
