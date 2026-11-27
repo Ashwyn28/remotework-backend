@@ -123,8 +123,11 @@ class WorkdayCountryFacetTest(unittest.TestCase):
 
 class EngineeringOnlyTest(unittest.TestCase):
     def test_titles(self):
-        yes = ["Senior Software Engineer", "Engineering Manager", "Data Engineer", "Research Scientist", "SRE", "iOS Developer"]
-        no = ["Sales Engineer", "Solutions Engineer", "Technical Recruiter - Engineering", "Product Manager", "Account Executive"]
+        yes = ["Senior Software Engineer", "Engineering Manager", "Data Engineer", "Research Scientist", "SRE", "iOS Developer",
+               "Tech Lead - Autonomy Performance", "Head of Data Science", "Senior Penetration Tester", "Staff Product Engineer"]
+        no = ["Sales Engineer", "Solutions Engineer", "Technical Recruiter - Engineering", "Product Manager", "Account Executive",
+              "Principal Business Developer - ISV, GenAI GTM Specialists", "Engineering Project Manager",
+              "Data Science Product Manager", "Technical Program Manager", "UK - Specialist: Seasonal, Part-time"]
         for title in yes:
             self.assertTrue(classify.is_engineering(title), title)
         for title in no:

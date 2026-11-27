@@ -140,7 +140,9 @@ NOT_ENGINEERING = re.compile(
     r"marketing|finance|legal|counsel|people|hr|payroll|executive assistant|assistant to|"
     r"coordinator|office|facilities|partnerships?|business development|community|content|"
     r"writer|enablement|evangelist|advocate|implementation|onboarding|professional services|"
-    r"consultant|bid|commercial)\b",
+    r"consultant|bid|commercial|business developer|"
+    # coordinating or owning a product rather than building it
+    r"(project|program|programme|product|delivery|release) (manager|owner|lead|director))\b",
     re.I,
 )
 
