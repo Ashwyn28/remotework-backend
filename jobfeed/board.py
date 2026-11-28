@@ -14,9 +14,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import classify
+from . import classify, salary
 from .logos import CONTENT_TYPES, find_logo, slugify
-from .sources import Role, SourceError, fetch
+from .sources import Role, SourceError, fetch, shorten
 from .storage import Store
 
 log = logging.getLogger(__name__)
@@ -93,10 +93,11 @@ def listing_entry(role: Role, company_id: str, today: str) -> dict:
     return {
         "id": role_id(role.source_id),
         "job_title": role.title[:255],
-        "description": role.description,
+        "description": shorten(role.description),
         "category": classify.work_type(role.title, role.department),
         "seniority": classify.seniority(role.title),
-        "salary": role.salary,
+        # posted pay; estimated later in `build` for roles that state none
+        "salary": role.salary or salary.from_text(role.description),
         "region": role.location[:255],
         "arrangement": classify.arrangement(role),
         "premium": False,
@@ -184,6 +185,15 @@ def build(store: Store, companies: list[dict] | None = None, now: datetime | Non
     unique = list({listing["id"]: listing for listing in listings}.values())
     # newest first; roles without a posting date go last
     unique.sort(key=lambda row: row.get("posted_at") or "", reverse=True)
+    industry = {entry["id"]: entry["industry"] for entry in entries.values()}
+    for row in unique:
+        if row.get("salary_estimated") or not row["salary"]:
+            row["salary"] = salary.estimate(
+                row["seniority"], row["category"], row["company"], industry.get(row["company"], ""), row["region"]
+            )
+            row["salary_estimated"] = True
+        else:
+            row["salary_estimated"] = False
     result.roles = len(unique)
     previous_ids = {row["id"] for rows in previous_by_company.values() for row in rows}
     board = {

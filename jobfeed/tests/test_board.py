@@ -69,6 +69,24 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(companies["acme-bank"]["logo"], "/static/logos/acme-bank.png")
         self.assertEqual(companies["robo-co"]["rank"], 1)
 
+    def test_salaries_are_posted_or_estimated(self):
+        long_text = "About us. " * 80 + "Salary: £70,000 – £90,000 + bonus."
+        self.build({
+            "acme": [
+                role("greenhouse:acme:1", salary="£95k – £120k"),
+                role("greenhouse:acme:2", description=long_text),
+                role("greenhouse:acme:3"),
+            ],
+            "robo": [],
+        })
+
+        by_id = {row["id"]: row for row in self.board()["listings"]}
+        posted, described, estimated = (by_id[board.role_id(f"greenhouse:acme:{n}")] for n in (1, 2, 3))
+        self.assertEqual((posted["salary"], posted["salary_estimated"]), ("£95k – £120k", False))
+        self.assertEqual((described["salary"], described["salary_estimated"]), ("£70k – £90k", False))
+        self.assertLessEqual(len(described["description"]), 500)
+        self.assertEqual((estimated["salary"], estimated["salary_estimated"]), ("£85k – £110k", True))
+
     def test_role_ids_are_stable_between_syncs(self):
         self.build({"acme": [role()], "robo": []})
         first = self.board()["listings"][0]["id"]
