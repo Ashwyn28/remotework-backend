@@ -80,12 +80,16 @@ def get_text(url: str) -> str:
     return _request(url, accept="text/html").decode("utf-8", "replace")
 
 
-def plain_text(markup: str, limit: int = DESCRIPTION_LIMIT) -> str:
-    """Readable text from a job description, cut at a sentence where possible."""
+def plain_text(markup: str) -> str:
+    """Readable text from a job description, in full (the board shortens it with `shorten`)."""
     text = html.unescape(markup or "")
     text = re.sub(r"<(script|style)\b.*?</\1>", " ", text, flags=re.S | re.I)
     text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s+", " ", html.unescape(text)).strip()
+    return re.sub(r"\s+", " ", html.unescape(text)).strip()
+
+
+def shorten(text: str, limit: int = DESCRIPTION_LIMIT) -> str:
+    """The description cut at a sentence where possible."""
     if len(text) <= limit:
         return text
     cut = text[:limit]
