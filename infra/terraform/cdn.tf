@@ -93,13 +93,16 @@ resource "aws_cloudfront_response_headers_policy" "security" {
       override = true
       # 'unsafe-inline' scripts: SvelteKit's app shell starts the app from an inline script.
       # Google's sign-in button needs its script, frame, styles and connections allowed.
+      # PostHog (EU): events go to eu.i.posthog.com; recordings and its other parts load from
+      # eu-assets.i.posthog.com, and session recording compresses in a blob: worker.
       content_security_policy = join("; ", [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client",
+        "script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client https://eu-assets.i.posthog.com",
         "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
         "img-src 'self' data: https:",
         "font-src 'self' data:",
-        "connect-src 'self' https://accounts.google.com/gsi/",
+        "connect-src 'self' https://accounts.google.com/gsi/ https://eu.i.posthog.com https://eu-assets.i.posthog.com",
+        "worker-src 'self' blob:",
         "frame-src https://accounts.google.com/gsi/",
         "frame-ancestors 'none'",
         "base-uri 'self'",
