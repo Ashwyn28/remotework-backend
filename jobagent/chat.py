@@ -18,6 +18,10 @@ from typing import Protocol
 
 from .prompt import MODEL, SYSTEM, TOOLS
 
+# Streamed requests send tool inputs as they are generated. The API then leaves validating them to
+# us: the page checks every input against the board before using it.
+STREAMING_TOOLS = [{**tool, "eager_input_streaming": True} for tool in TOOLS]
+
 log = logging.getLogger(__name__)
 
 MAX_BODY = 200 * 1024
@@ -176,6 +180,14 @@ class Agent:
         return self._client
 
     def handle(self, method: str, headers: dict[str, str], body: bytes, ip: str) -> Reply:
+        admitted = self.admit(method, headers, body, ip)
+        if isinstance(admitted, Reply):
+            return admitted
+        return self._ask(admitted, effort_for(admitted))
+
+    def admit(self, method: str, headers: dict[str, str], body: bytes, ip: str) -> "Reply | list[dict]":
+        """Every check before money is spent: where the request came from, what it contains and
+        today's limits. Returns the conversation to send, or the reply refusing it."""
         if self.config.origin_secret and not hmac.compare_digest(
             headers.get(ORIGIN_HEADER, ""), self.config.origin_secret
         ):
@@ -195,8 +207,67 @@ class Agent:
             return Reply(429, {"error": "daily limit reached", "scope": "you"})
         if not self.quota.take("site", self.config.limits.site_per_day, day):
             return Reply(429, {"error": "daily limit reached", "scope": "site"})
+        return messages
 
-        return self._ask(messages, effort_for(messages))
+    def stream(self, messages: list[dict]):
+        """One model call, streamed: yields newline-delimited JSON events.
+
+            {"type": "text", "text": "..."}         a piece of the reply, as it is written
+            {"type": "tool", "name": "search_jobs"}  the model has started calling a tool
+            {"type": "done", "content": [...], "stop_reason": "..."}   the whole message
+            {"type": "error", "error": "..."}       nothing more will come
+
+        The final "done" carries the complete content blocks, thinking included, exactly as the
+        API returned them, for the browser to send back unchanged on the next turn.
+        """
+        import anthropic
+
+        def line(event: dict) -> str:
+            return json.dumps(event, ensure_ascii=False) + "\n"
+
+        try:
+            with self.client.messages.stream(
+                model=MODEL,
+                max_tokens=MAX_OUTPUT_TOKENS,
+                system=SYSTEM,
+                tools=STREAMING_TOOLS,
+                messages=messages,
+                output_config={"effort": effort_for(messages)},
+                cache_control={"type": "ephemeral"},
+            ) as stream:
+                for event in stream:
+                    if event.type == "text":
+                        yield line({"type": "text", "text": event.text})
+                    elif event.type == "content_block_start" and event.content_block.type == "tool_use":
+                        yield line({"type": "tool", "name": event.content_block.name})
+                response = stream.get_final_message()
+        except ValueError:
+            # a tool's input arrived as JSON the SDK could not parse at all
+            log.warning("unparseable tool input in stream")
+            yield line({"type": "error", "error": "the reply was garbled, try again"})
+            return
+        except anthropic.BadRequestError as error:
+            log.warning("model rejected the request: %s", error.message)
+            yield line({"type": "error", "error": "the conversation could not be continued", "status": 400})
+            return
+        except anthropic.RateLimitError:
+            yield line({"type": "error", "error": "busy, try again shortly", "status": 503})
+            return
+        except anthropic.APIStatusError as error:
+            log.error("model error %s: %s", error.status_code, error.message)
+            yield line({"type": "error", "error": "the assistant is unavailable", "status": 502})
+            return
+        except anthropic.APIConnectionError:
+            log.error("could not reach the model")
+            yield line({"type": "error", "error": "the assistant is unavailable", "status": 502})
+            return
+
+        usage = response.usage
+        log.info(
+            "turn stop=%s in=%s cache_read=%s out=%s (streamed)",
+            response.stop_reason, usage.input_tokens, usage.cache_read_input_tokens, usage.output_tokens,
+        )
+        yield line({"type": "done", "content": response.to_dict()["content"], "stop_reason": response.stop_reason})
 
     def _ask(self, messages: list[dict], effort: str = "low") -> Reply:
         import anthropic

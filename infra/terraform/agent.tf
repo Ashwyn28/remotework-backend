@@ -59,11 +59,14 @@ resource "aws_iam_role_policy" "agent" {
 }
 
 resource "aws_lambda_function" "agent" {
-  function_name    = "${var.project}-agent"
-  role             = aws_iam_role.agent.arn
-  runtime          = "python3.12"
-  architectures    = ["arm64"]
-  handler          = "jobagent.lambda_handler.handler"
+  function_name = "${var.project}-agent"
+  role          = aws_iam_role.agent.arn
+  runtime       = "python3.12"
+  architectures = ["arm64"]
+  # run.sh starts the streaming web app (jobagent/server.py) under AWS's Lambda Web Adapter layer,
+  # which relays requests to it and streams its replies back through the function URL
+  handler          = "run.sh"
+  layers           = ["arn:aws:lambda:${var.aws_region}:753240598075:layer:LambdaAdapterLayerArm64:30"]
   filename         = var.agent_package
   source_code_hash = filebase64sha256(var.agent_package)
   memory_size      = 512
@@ -72,8 +75,12 @@ resource "aws_lambda_function" "agent" {
 
   environment {
     variables = {
-      SITE_ORIGIN = "https://${var.domain_name}"
-      QUOTA_TABLE = aws_dynamodb_table.agent_quota.name
+      AWS_LAMBDA_EXEC_WRAPPER      = "/opt/bootstrap"
+      AWS_LWA_INVOKE_MODE          = "response_stream"
+      AWS_LWA_READINESS_CHECK_PATH = "/"
+      PORT                         = "8080"
+      SITE_ORIGIN                  = "https://${var.domain_name}"
+      QUOTA_TABLE                  = aws_dynamodb_table.agent_quota.name
       # identifiers from the Claude Console's workload identity setup; none of them is secret
       ANTHROPIC_ORGANIZATION_ID    = var.anthropic_organization_id
       ANTHROPIC_FEDERATION_RULE_ID = var.anthropic_federation_rule_id
@@ -92,6 +99,8 @@ resource "aws_lambda_function" "agent" {
 resource "aws_lambda_function_url" "agent" {
   function_name      = aws_lambda_function.agent.function_name
   authorization_type = "NONE"
+  # replies reach the browser as they are written
+  invoke_mode = "RESPONSE_STREAM"
 }
 
 resource "aws_lambda_permission" "agent_url" {

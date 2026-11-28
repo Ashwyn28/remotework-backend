@@ -4,7 +4,8 @@
 
 - sync.zip: the `jobfeed` package (standard library only; boto3 comes with the Lambda runtime)
 - api.zip:  the `jobapi` package plus google-auth and requests, built for Python 3.12 on arm64
-- agent.zip: the `jobagent` package plus the Anthropic SDK, built the same way
+- agent.zip: the `jobagent` package, the Anthropic SDK and the small web server that streams
+  replies (Starlette, Uvicorn), with run.sh at the root for the Lambda Web Adapter
 
 Zips are reproducible: the same code gives byte-identical files, so Terraform only updates a
 function when its code really changed.
@@ -21,7 +22,7 @@ FIXED_TIME = (2020, 1, 1, 0, 0, 0)
 SKIP_DIRS = {"tests", "__pycache__"}
 SKIP_FILES = {"devserver.py", "__main__.py"}
 API_DEPENDENCIES = ["google-auth==2.62.2", "requests==2.32.5"]
-AGENT_DEPENDENCIES = ["anthropic==1.17.0"]
+AGENT_DEPENDENCIES = ["anthropic==1.17.0", "starlette==1.10.0", "uvicorn==0.54.0"]
 
 
 def add_tree(archive: zipfile.ZipFile, folder: Path, base: Path) -> None:
@@ -71,7 +72,14 @@ def build_api() -> Path:
 
 
 def build_agent() -> Path:
-    return build_with_deps("agent", "jobagent", AGENT_DEPENDENCIES)
+    target = build_with_deps("agent", "jobagent", AGENT_DEPENDENCIES)
+    # the Lambda Web Adapter starts the streaming app from run.sh at the root, which must be executable
+    with zipfile.ZipFile(target, "a") as archive:
+        info = zipfile.ZipInfo("run.sh", FIXED_TIME)
+        info.external_attr = 0o755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        archive.writestr(info, (ROOT / "jobagent" / "run.sh").read_bytes())
+    return target
 
 
 if __name__ == "__main__":
