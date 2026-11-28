@@ -25,10 +25,14 @@ API_DEPENDENCIES = ["google-auth==2.62.2", "requests==2.32.5"]
 AGENT_DEPENDENCIES = ["anthropic==1.17.0", "starlette==1.10.0", "uvicorn==0.54.0"]
 
 
-def add_tree(archive: zipfile.ZipFile, folder: Path, base: Path) -> None:
+def add_tree(archive: zipfile.ZipFile, folder: Path, base: Path, ours: bool = True) -> None:
+    """Add a folder. For our own packages, leave out tests and local-only entry points; installed
+    libraries go in whole (Uvicorn, for one, is started through its __main__.py)."""
     for path in sorted(folder.rglob("*")):
         relative = path.relative_to(base)
-        if path.is_dir() or SKIP_DIRS & set(relative.parts) or path.name in SKIP_FILES or path.suffix == ".pyc":
+        if path.is_dir() or path.suffix == ".pyc" or "__pycache__" in relative.parts:
+            continue
+        if ours and (SKIP_DIRS & set(relative.parts) or path.name in SKIP_FILES):
             continue
         info = zipfile.ZipInfo(relative.as_posix(), FIXED_TIME)
         info.external_attr = 0o644 << 16
@@ -63,7 +67,7 @@ def build_with_deps(name: str, package: str, requirements: list[str]) -> Path:
     target = BUILD / f"{name}.zip"
     with zipfile.ZipFile(target, "w") as archive:
         add_tree(archive, ROOT / package, ROOT)
-        add_tree(archive, deps, deps)
+        add_tree(archive, deps, deps, ours=False)
     return target
 
 
